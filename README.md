@@ -1,6 +1,8 @@
-# OpenGL Boiler plate Project
+# ImGUI Playground project
 
 This is an OpenGL scatfold test project that uses the glfw, GLEW, configured to use make for building on Windows using the MinGW compiler.
+
+This was created to play around barebones, minimalistic imgui implementations.
 
 ## Pre-requisites
 
