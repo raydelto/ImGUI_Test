@@ -9,7 +9,7 @@ LIBS = -L. \
 
 INCLUDES = -I./includes -Ithird_party/imgui -Ithird_party/imgui/backends -Ithird_party/imgui_filedialog
 
-WARNINGS=-w
+WARNINGS=-Wall
 
 FLAGS=-std=c++17 -DIMGUI_DISABLE_WIN32_FUNCTIONS -DUSE_STD_FILESYSTEM
 
