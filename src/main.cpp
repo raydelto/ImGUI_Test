@@ -1,4 +1,6 @@
 #include "GL/glew.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
 #include <GLFW/glfw3.h>
 #include <sstream>
 #include <iostream>
@@ -6,7 +8,7 @@
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void processInput(GLFWwindow *window);
 void showFPS(GLFWwindow *window);
-const char *APP_TITLE = "My first OpenGL Triangle";
+const char *APP_TITLE = "ImGui OpenGL3 Example";
 GLFWwindow *window;
 
 // settings
@@ -136,11 +138,48 @@ bool init()
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 }
 
+void initImGui(GLFWwindow *window)
+{
+    // Setup Dear ImGui context
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO &io = ImGui::GetIO();
+    (void)io;
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
+
+    // Setup Dear ImGui style
+    ImGui::StyleColorsDark();
+
+    // Setup Platform/Renderer bindings
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init("#version 330");
+}
+
+void renderImGui()
+{
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+
+    // ImGui::ShowDemoWindow();
+    // Create a simple window
+    ImGui::Begin("Hello, World!");            // Create a window called "Hello, World!"
+    ImGui::Text("This is some useful text."); // Display some text
+    ImGui::End();
+
+    ImGui::Render();
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+}
+
 void render()
 {
+    initImGui(window);
+
+    // render loop
     while (!glfwWindowShouldClose(window))
     {
         showFPS(window);
+        glfwPollEvents();
         // input
         // -----
         processInput(window);
@@ -149,14 +188,13 @@ void render()
         // ------
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
+        renderImGui();
 
         // draw our first triangle
         glUseProgram(shaderProgram);
         glBindVertexArray(VAO);
         glDrawArrays(GL_TRIANGLES, 0, 3);
-
         glfwSwapBuffers(window);
-        glfwPollEvents();
     }
 
     // optional: de-allocate all resources once they've outlived their purpose:

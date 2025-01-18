@@ -23,11 +23,14 @@ TARGET = hello_imgui
 
 all: $(TARGET)
 
-$(TARGET): $(OBJS)
-	$(CXX) $(OBJS) -o $@ $(INCLUDES) $(WARNINGS) $(FLAGS) $(LIBS)
+main.o: src/main.cpp
+	$(CXX) $(CXXFLAGS) -c src/main.cpp -o main.o $(INCLUDES) $(WARNINGS) $(FLAGS)
 
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@ $(INCLUDES) $(WARNINGS) $(FLAGS)
 
+$(TARGET): $(OBJS)
+	$(CXX) $(OBJS) -o $@ $(INCLUDES) $(WARNINGS) $(FLAGS) $(LIBS)
+
 clean:
-	rm -r $(OBJS) $(TARGET)
+	rm -rf $(OBJS) $(TARGET) $(TARGET).exe
