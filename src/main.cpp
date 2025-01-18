@@ -1,6 +1,7 @@
 #include "GL/glew.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
+#include "ImGuiFileDialog.h"
 #include <GLFW/glfw3.h>
 #include <sstream>
 #include <iostream>
@@ -139,6 +140,85 @@ bool init()
     return true;
 }
 
+void drawFileLoader()
+{
+    ImGuiIO &io = ImGui::GetIO();
+    ImVec4 viewportRect;
+    (void)io;
+    // Start the Dear ImGui frame
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+
+#ifdef IMGUI_HAS_VIEWPORT
+    if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+    {
+        const auto viewport = ImGui::GetMainViewport();
+        if (viewport)
+        {
+            const auto pos = viewport->WorkPos;
+            const auto size = viewport->WorkSize;
+            viewportRect.x = pos.x;
+            viewportRect.y = pos.y;
+            viewportRect.z = size.x;
+            viewportRect.w = size.y;
+        }
+    }
+    else
+    {
+        viewportRect.x = 0;
+        viewportRect.y = 0;
+    }
+#endif
+
+    // open Dialog Simple
+    if (ImGui::Button("Open File Dialog"))
+    {
+        IGFD::FileDialogConfig config;
+        config.path = ".";
+        ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", "Choose File", ".cpp,.h,.hpp", config);
+    }
+    // display
+    if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey"))
+    {
+        if (ImGuiFileDialog::Instance()->IsOk())
+        { // action if OK
+            std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
+            std::string filePath = ImGuiFileDialog::Instance()->GetCurrentPath();
+
+            // action
+            std::cout << "File Path Name: " << filePathName << std::endl;
+            std::cout << "File Path: " << filePath << std::endl;
+        }
+
+        // close
+        ImGuiFileDialog::Instance()->Close();
+    }
+
+    // Cpu Zone : prepare
+    ImGui::Render();
+
+    // GPU Zone : Rendering
+    glfwMakeContextCurrent(window);
+
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+#ifdef IMGUI_HAS_VIEWPORT
+    // Update and Render additional Platform Windows
+    // (Platform functions may change the current OpenGL context, so we save/restore it to make it easier to paste this code elsewhere.
+    //  For this specific demo app we could also call glfwMakeContextCurrent(window) directly)
+    if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+    {
+        GLFWwindow *backup_current_context = glfwGetCurrentContext();
+        ImGui::UpdatePlatformWindows();
+        ImGui::RenderPlatformWindowsDefault();
+        glfwMakeContextCurrent(backup_current_context);
+    }
+#endif
+
+    ImGui::EndFrame();
+}
+
 void initImGui(GLFWwindow *window)
 {
     // Setup Dear ImGui context
@@ -146,7 +226,12 @@ void initImGui(GLFWwindow *window)
     ImGui::CreateContext();
     ImGuiIO &io = ImGui::GetIO();
     (void)io;
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
+    // io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+    // io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;   // Enable Docking
+    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable; // Enable Multi-Viewport / Platform Windows
+    io.ConfigViewportsNoDecoration = false;             // no decoration, for avoid a resuize bug
+    io.FontAllowUserScaling = true;                     // zoom wiht ctrl + mouse wheel
 
     // Setup Dear ImGui style
     ImGui::StyleColorsDark();
@@ -189,12 +274,12 @@ void render()
         // ------
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
-        renderImGui();
 
         // draw our first triangle
         glUseProgram(shaderProgram);
         glBindVertexArray(VAO);
         glDrawArrays(GL_TRIANGLES, 0, 3);
+        drawFileLoader();
         glfwSwapBuffers(window);
     }
 
@@ -203,8 +288,13 @@ void render()
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
 
-    // glfw: terminate, clearing all previously allocated GLFW resources.
+    // cleanup
     // ------------------------------------------------------------------
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
+
+    glfwDestroyWindow(window);
     glfwTerminate();
 }
 
