@@ -380,17 +380,12 @@ _wopendir(
      * Note that on WinRT there's no way to convert relative paths
      * into absolute paths, so just assume it is an absolute path.
      */
-#ifdef WINAPI_FAMILY
-#if WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
     /* Desktop */
     n = GetFullPathNameW (dirname, 0, NULL, NULL);
 #else
     /* WinRT */
     n = wcslen (dirname);
-#endif
-#else
-    /* Assume desktop if WINAPI_FAMILY is not defined */
-    n = GetFullPathNameW (dirname, 0, NULL, NULL);
 #endif
 
     /* Allocate room for absolute directory name and search pattern */
@@ -407,23 +402,15 @@ _wopendir(
      * Note that on WinRT there's no way to convert relative paths
      * into absolute paths, so just assume it is an absolute path.
      */
-#ifdef WINAPI_FAMILY
-    if (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP) {
-        /* Desktop */
-        n = GetFullPathNameW (dirname, n, dirp->patt, NULL);
-        if (n <= 0) {
-            goto exit_closedir;
-        }
-    } else {
-        /* WinRT */
-        wcsncpy_s (dirp->patt, n+1, dirname, n);
-    }
-#else
-    /* Assume desktop if WINAPI_FAMILY is not defined */
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+    /* Desktop */
     n = GetFullPathNameW (dirname, n, dirp->patt, NULL);
     if (n <= 0) {
         goto exit_closedir;
     }
+#else
+    /* WinRT */
+    wcsncpy_s (dirp->patt, n+1, dirname, n);
 #endif
 
     /* Append search pattern \* to the directory name */

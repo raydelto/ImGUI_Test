@@ -1823,12 +1823,8 @@ bool IGFD::FileManager::M_SortStrings(const FileDialogInternal& vFileDialogInter
     if (vFileDialogInternal.getDialogConfig().flags & ImGuiFileDialogFlags_NaturalSorting) {
         return IGFD::Utils::NaturalCompare(vA, vB, vInsensitiveCase, vDescendingOrder);
     } else if (vInsensitiveCase) {
-        #if defined(_IGFD_WIN_)
-                const auto ret = _stricmp(vA.c_str(), vB.c_str());
-        #else
-                const auto ret = strcasecmp(vA.c_str(), vB.c_str());
-        #endif
-    return vDescendingOrder ? (ret > 0) : (ret < 0);
+        const auto ret = stricmp(vA.c_str(), vB.c_str());
+        return vDescendingOrder ? (ret > 0) : (ret < 0);
     } else {
         const auto ret = strcmp(vA.c_str(), vB.c_str());
         return vDescendingOrder ? (ret > 0) : (ret < 0);
