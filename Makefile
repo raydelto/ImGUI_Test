@@ -11,7 +11,7 @@ INCLUDES = -I./includes -Ithird_party/imgui -Ithird_party/imgui/backends -Ithird
 
 WARNINGS=-Wall
 
-FLAGS=-std=c++17 -DIMGUI_DISABLE_WIN32_FUNCTIONS -DUSE_STD_FILESYSTEM
+FLAGS=-std=c++17
 
 IMGUI_SRC = third_party/imgui/imgui.cpp third_party/imgui/imgui_draw.cpp \
 	        third_party/imgui/imgui_tables.cpp third_party/imgui/imgui_widgets.cpp \
