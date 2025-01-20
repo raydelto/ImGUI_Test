@@ -9,6 +9,11 @@
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void processInput(GLFWwindow *window);
 void showFPS(GLFWwindow *window);
+void initImGui(GLFWwindow *window);
+void renderMenuBar();
+bool initOpenGL();
+void renderImGui();
+
 const char *APP_TITLE = "ImGui OpenGL3 Example";
 GLFWwindow *window;
 
@@ -35,7 +40,98 @@ const char *fragmentShaderSource = "#version 330 core\n"
                                    "   FragColor = vec4(1.0, 1.0, 0.0 ,1.0);\n"
                                    "}\n\0";
 
-bool init()
+
+// Function to render the ImGui menu bar
+void renderMenuBar()
+{
+    // Initialize the file dialog instace
+    if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey"))
+    {
+        if (ImGuiFileDialog::Instance()->IsOk())
+        {
+            std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
+            std::string filePath = ImGuiFileDialog::Instance()->GetCurrentPath();
+
+            // action
+            std::cout << "File Path Name: " << filePathName << std::endl;
+            std::cout << "File Path: " << filePath << std::endl;
+        }
+        // close
+        ImGuiFileDialog::Instance()->Close();
+    }
+
+    // Create the main menu bar
+    if (ImGui::BeginMainMenuBar())
+    {
+        // Create a "File" menu
+        if (ImGui::BeginMenu("File"))
+        {
+            if (ImGui::MenuItem("New"))
+            {
+                // Handle "New" action
+            }
+            if (ImGui::MenuItem("Open", "Ctrl+O"))
+            {
+                // Handle "Open" action
+                IGFD::FileDialogConfig config;
+                config.path = ".";
+                ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", "Choose File", ".cpp,.h,.hpp", config);
+            }
+            if (ImGui::MenuItem("Save", "Ctrl+S"))
+            {
+                // Handle "Save" action
+                std::cout << "SAVE!" << std::endl;
+            }
+            ImGui::Separator(); // Add a separator
+            if (ImGui::MenuItem("Exit", "Alt+F4"))
+            {
+                glfwSetWindowShouldClose(window, true);
+            }
+            ImGui::EndMenu(); // End "File" menu
+        }
+
+        // Create an "Edit" menu
+        if (ImGui::BeginMenu("Edit"))
+        {
+            if (ImGui::MenuItem("Undo", "Ctrl+Z"))
+            {
+                // Handle "Undo" action
+            }
+            if (ImGui::MenuItem("Redo", "Ctrl+Y", false, false))
+            {
+                // Disabled "Redo" option
+            }
+            ImGui::Separator(); // Add a separator
+            if (ImGui::MenuItem("Cut", "Ctrl+X"))
+            {
+                // Handle "Cut" action
+            }
+            if (ImGui::MenuItem("Copy", "Ctrl+C"))
+            {
+                // Handle "Copy" action
+            }
+            if (ImGui::MenuItem("Paste", "Ctrl+V"))
+            {
+                // Handle "Paste" action
+            }
+            ImGui::EndMenu(); // End "Edit" menu
+        }
+
+        // Create a "Help" menu
+        if (ImGui::BeginMenu("Help"))
+        {
+            if (ImGui::MenuItem("About"))
+            {
+                // Handle "About" action
+            }
+            ImGui::EndMenu(); // End "Help" menu
+        }
+
+        ImGui::EndMainMenuBar(); // End the menu bar
+    }
+}
+
+bool initOpenGL()
 {
     // glfw: initialize and configure
     // ------------------------------
@@ -49,7 +145,7 @@ bool init()
     window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, APP_TITLE, nullptr, nullptr);
     if (window == nullptr)
     {
-        std::cout << "Failed to create GLFW window" << std::endl;
+        std::cerr << "Failed to create GLFW window" << std::endl;
         glfwTerminate();
         return -1;
     }
@@ -77,7 +173,7 @@ bool init()
     if (!success)
     {
         glGetShaderInfoLog(vertexShader, 512, nullptr, infoLog);
-        std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n"
+        std::cerr << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n"
                   << infoLog << std::endl;
     }
     // fragment shader
@@ -90,7 +186,7 @@ bool init()
     if (!success)
     {
         glGetShaderInfoLog(fragmentShader, 512, nullptr, infoLog);
-        std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n"
+        std::cerr << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n"
                   << infoLog << std::endl;
     }
 
@@ -104,7 +200,7 @@ bool init()
     if (!success)
     {
         glGetProgramInfoLog(shaderProgram, 512, nullptr, infoLog);
-        std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n"
+        std::cerr << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n"
                   << infoLog << std::endl;
     }
     glDeleteShader(vertexShader);
@@ -137,86 +233,13 @@ bool init()
 
     // uncomment this call to draw in wireframe polygons.
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+    // Print OpenGL Implementation details
+    std::cout << "GL_VENDOR: " << glGetString(GL_VENDOR) << std::endl;
+    std::cout << "GL_RENDERER: " << glGetString(GL_RENDERER) << std::endl;
+    std::cout << "GL_VERSION: " << glGetString(GL_VERSION) << std::endl;
+    std::cout << "GL_SHADING_LANGUAGE_VERSION: " << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
     return true;
-}
-
-void drawFileLoader()
-{
-    ImGuiIO &io = ImGui::GetIO();
-    ImVec4 viewportRect;
-    (void)io;
-    // Start the Dear ImGui frame
-    ImGui_ImplOpenGL3_NewFrame();
-    ImGui_ImplGlfw_NewFrame();
-    ImGui::NewFrame();
-
-#ifdef IMGUI_HAS_VIEWPORT
-    if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-    {
-        const auto viewport = ImGui::GetMainViewport();
-        if (viewport)
-        {
-            const auto pos = viewport->WorkPos;
-            const auto size = viewport->WorkSize;
-            viewportRect.x = pos.x;
-            viewportRect.y = pos.y;
-            viewportRect.z = size.x;
-            viewportRect.w = size.y;
-        }
-    }
-    else
-    {
-        viewportRect.x = 0;
-        viewportRect.y = 0;
-    }
-#endif
-
-    // open Dialog Simple
-    if (ImGui::Button("Open File Dialog"))
-    {
-        IGFD::FileDialogConfig config;
-        config.path = ".";
-        ImGuiFileDialog::Instance()->OpenDialog("ChooseFileDlgKey", "Choose File", ".cpp,.h,.hpp", config);
-    }
-    // display
-    if (ImGuiFileDialog::Instance()->Display("ChooseFileDlgKey"))
-    {
-        if (ImGuiFileDialog::Instance()->IsOk())
-        { // action if OK
-            std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
-            std::string filePath = ImGuiFileDialog::Instance()->GetCurrentPath();
-
-            // action
-            std::cout << "File Path Name: " << filePathName << std::endl;
-            std::cout << "File Path: " << filePath << std::endl;
-        }
-
-        // close
-        ImGuiFileDialog::Instance()->Close();
-    }
-
-    // Cpu Zone : prepare
-    ImGui::Render();
-
-    // GPU Zone : Rendering
-    glfwMakeContextCurrent(window);
-
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
-#ifdef IMGUI_HAS_VIEWPORT
-    // Update and Render additional Platform Windows
-    // (Platform functions may change the current OpenGL context, so we save/restore it to make it easier to paste this code elsewhere.
-    //  For this specific demo app we could also call glfwMakeContextCurrent(window) directly)
-    if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-    {
-        GLFWwindow *backup_current_context = glfwGetCurrentContext();
-        ImGui::UpdatePlatformWindows();
-        ImGui::RenderPlatformWindowsDefault();
-        glfwMakeContextCurrent(backup_current_context);
-    }
-#endif
-
-    ImGui::EndFrame();
 }
 
 void initImGui(GLFWwindow *window)
@@ -224,16 +247,6 @@ void initImGui(GLFWwindow *window)
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
-    ImGuiIO &io = ImGui::GetIO();
-    (void)io;
-    // io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-    // io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
-#ifdef IMGUI_HAS_VIEWPORT
-    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;   // Enable Docking
-    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable; // Enable Multi-Viewport / Platform Windows
-    io.ConfigViewportsNoDecoration = false;             // no decoration, for avoid a resuize bug
-#endif
-    io.FontAllowUserScaling = true;                     // zoom wiht ctrl + mouse wheel
 
     // Setup Dear ImGui style
     ImGui::StyleColorsDark();
@@ -245,24 +258,15 @@ void initImGui(GLFWwindow *window)
 
 void renderImGui()
 {
-    ImGui_ImplOpenGL3_NewFrame();
-    ImGui_ImplGlfw_NewFrame();
-    ImGui::NewFrame();
-
-    // ImGui::ShowDemoWindow();
     // Create a simple window
     ImGui::Begin("Hello, World!");            // Create a window called "Hello, World!"
     ImGui::Text("This is some useful text."); // Display some text
     ImGui::End();
-
-    ImGui::Render();
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
+// render loop
 void render()
 {
-    initImGui(window);
-
     // render loop
     while (!glfwWindowShouldClose(window))
     {
@@ -281,11 +285,23 @@ void render()
         glUseProgram(shaderProgram);
         glBindVertexArray(VAO);
         glDrawArrays(GL_TRIANGLES, 0, 3);
-        drawFileLoader();
+
+        // Start the ImGui frame
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+
+        // Render the menu bar
+        renderMenuBar();
+
+        // Render ImGui
+        ImGui::Render();
+        glfwMakeContextCurrent(window);
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         glfwSwapBuffers(window);
     }
 
-    // optional: de-allocate all resources once they've outlived their purpose:
+    // De-allocate all resources once they've outlived their purpose:
     // ------------------------------------------------------------------------
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
@@ -298,19 +314,6 @@ void render()
 
     glfwDestroyWindow(window);
     glfwTerminate();
-}
-
-int main()
-{
-    init();
-
-    // Print OpenGL Implementation details
-    std::cout << "GL_VENDOR: " << glGetString(GL_VENDOR) << std::endl;
-    std::cout << "GL_RENDERER: " << glGetString(GL_RENDERER) << std::endl;
-    std::cout << "GL_VERSION: " << glGetString(GL_VERSION) << std::endl;
-
-    render();
-    return 0;
 }
 
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
@@ -364,4 +367,12 @@ void showFPS(GLFWwindow *window)
     }
 
     frameCount++;
+}
+
+int main()
+{
+    initOpenGL();
+    initImGui(window);
+    render();
+    return 0;
 }
